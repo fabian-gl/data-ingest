@@ -1,7 +1,17 @@
 export const EnvConfiguration = () => ({
-  environment: process.env.NODE_ENV,
-  scope: process.env.SCOPE,
+  appConfig: {
+    environment: process.env.NODE_ENV,
+    scope: process.env.SCOPE,
 
-  host: process.env.HOST,
-  port: +process.env.PORT!,
+    host: process.env.HOST,
+    port: +process.env.PORT!,
+  },
 });
+
+export interface IAppConfig {
+  environment: string;
+  scope: string;
+
+  host: string;
+  port: number;
+}
