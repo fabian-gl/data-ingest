@@ -17,6 +17,30 @@ services:
     networks:
       - data-ingest-network
 
+  data_ingest_app:
+    depends_on:
+      - data_ingest_db
+    build: .
+    restart: always
+    ports:
+      - ${PORT}:${PORT}
+    container_name: data_ingest_app
+    hostname: data_ingest
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      SCOPE: ${SCOPE}
+      HOST: ${HOST}
+      PORT: ${PORT}
+      DB_HOST: data_ingest_db
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_EXTRA_URI: ${DB_EXTRA_URI}
+      DB_SSL: ${DB_SSL}
+
+    networks:
+      - data-ingest-network
 networks:
   data-ingest-network:
     external: true
