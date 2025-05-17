@@ -1,0 +1,22 @@
+services:
+  data_ingest_db:
+    image: mongo:6
+    restart: always
+    ports:
+      - '${DB_PORT}:27017'
+    environment:
+      MONGODB_DATABASE: ${DB_NAME}
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    container_name: data_ingest_db
+    volumes:
+      - ./mongo:/data/db
+    command: mongod
+
+    networks:
+      - data-ingest-network
+
+networks:
+  data-ingest-network:
+    external: true
