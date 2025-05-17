@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration, EnvValidationSchema } from './config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseConfigModule, DatabaseConfigService } from './config/database';
+import { DataIngestModule } from './data-ingest/data-ingest.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { DatabaseConfigModule, DatabaseConfigService } from './config/database';
         configService.getConfig(),
       inject: [DatabaseConfigService],
     }),
+    DataIngestModule,
   ],
   controllers: [AppController],
   providers: [AppService],
