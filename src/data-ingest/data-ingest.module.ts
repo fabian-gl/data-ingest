@@ -7,6 +7,10 @@ import {
   NormalizedData,
   NormalizedDataSchema,
 } from 'src/persistance/schemas/normalized-data.schema';
+import {
+  ProcessError,
+  ProcessErrorSchema,
+} from 'src/persistance/schemas/errors.schema';
 
 @Module({
   imports: [
@@ -16,6 +20,7 @@ import {
     }),
     MongooseModule.forFeature([
       { name: NormalizedData.name, schema: NormalizedDataSchema },
+      { name: ProcessError.name, schema: ProcessErrorSchema },
     ]),
   ],
   controllers: [DataIngestController],

@@ -1,4 +1,4 @@
-// This interface shows the normalized version of the data that may arrive to us
+// This interface represents the normalized version of the data that may arrive to us
 
 export interface INormalizedData {
   id: string;

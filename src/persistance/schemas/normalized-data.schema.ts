@@ -26,10 +26,10 @@ export class NormalizedData {
   @Prop({ index: true })
   priceSegment?: string;
 
-  @Prop({ index: true })
-  bucketName: string;
+  @Prop({ required: true, index: true })
+  filePath: string;
 
-  @Prop({ index: true })
+  @Prop({ required: true, index: true })
   fileName: string;
 }
 
