@@ -5,26 +5,22 @@ import { Model, RootFilterQuery } from 'mongoose';
 import { NormalizedData } from 'src/persistance/schemas/normalized-data.schema';
 import { outDataProjection } from './projections/output.data.projection';
 import { getRangeFilter } from 'src/utils/range-filter';
+import { DataRepositoryService } from 'src/data-repository/data-repository.service';
 
 @Injectable()
 export class DataQueryService {
-  constructor(
-    @InjectModel(NormalizedData.name)
-    private readonly dataModel: Model<NormalizedData>,
-  ) {}
+  constructor(private readonly dataRepository: DataRepositoryService) {}
+
   async filterData(filterDataDto: FilterDataDto) {
     const { limit, offset } = filterDataDto;
 
     const query = this.getFilterQuery(filterDataDto);
 
-    const totalQuery = this.dataModel.countDocuments(query);
-    const dataQuery = this.dataModel
-      .find(query, outDataProjection)
-      .sort({ city: 'asc', _id: 'asc' })
-      .limit(limit)
-      .skip(offset);
-
-    const [data, total] = await Promise.all([dataQuery, totalQuery]);
+    const [data, total] = await this.dataRepository.findManyDataAndCount({
+      query,
+      limit,
+      offset,
+    });
 
     return {
       data,

@@ -7,7 +7,6 @@ import {
 import { AxiosError } from 'axios';
 import { catchError, firstValueFrom } from 'rxjs';
 import { Readable } from 'stream';
-
 import { chain } from 'stream-chain';
 import { parser } from 'stream-json';
 import { streamArray } from 'stream-json/streamers/StreamArray';
@@ -15,16 +14,14 @@ import { DataParser } from './common/parser.type';
 import { normalizeLargeData } from './large-data/large-data.parser';
 import { normalizeStructuredData } from './structured-data/structured-data.parser';
 import { INormalizedData } from './common/normalized-data.types';
-import { InjectModel } from '@nestjs/mongoose';
 import { NormalizedData } from 'src/persistance/schemas/normalized-data.schema';
-import { AnyBulkWriteOperation, Model } from 'mongoose';
-import { ProcessError } from 'src/persistance/schemas/errors.schema';
+import { DataRepositoryService } from 'src/data-repository/data-repository.service';
 
 @Injectable()
 export class DataIngestService {
   private readonly logger = new Logger(DataIngestService.name);
 
-  private readonly UPSERT_BATCH_SIZE = 1000;
+  private readonly UPSERT_BATCH_SIZE = 2000;
   private normalizedDataBatch: Partial<NormalizedData>[] = [];
 
   private filePath: string;
@@ -34,13 +31,20 @@ export class DataIngestService {
 
   constructor(
     private readonly httpService: HttpService,
-
-    @InjectModel(NormalizedData.name)
-    private readonly dataModel: Model<NormalizedData>,
-
-    @InjectModel(ProcessError.name)
-    private readonly errorModel: Model<ProcessError>,
+    private readonly dataRepository: DataRepositoryService,
   ) {}
+  async processFile(filePath: string, fileName: string) {
+    // Init process variables
+    this.fileName = fileName;
+    this.filePath = filePath;
+
+    this.dataParser = undefined;
+
+    const fullPath = `${filePath}${fileName}`;
+    const { data } = await firstValueFrom(this.getFileObservable(fullPath));
+
+    await this.ingestData(data);
+  }
 
   private ingestData(stream: Readable) {
     const pipeline = chain([
@@ -68,20 +72,6 @@ export class DataIngestService {
     });
   }
 
-  async processFile(filePath: string, fileName: string) {
-    // Init process variables
-    this.fileName = fileName;
-    this.filePath = filePath;
-
-    this.dataParser = undefined;
-
-    const fullPath = `${filePath}${fileName}`;
-
-    const response = await firstValueFrom(this.getFileObservable(fullPath));
-
-    await this.ingestData(response.data);
-  }
-
   private processObject(data: any) {
     if (!this.dataParser) {
       this.selectParser(data);
@@ -92,13 +82,11 @@ export class DataIngestService {
     if (normalizedData) {
       this.addToBatch(normalizedData);
     } else {
-      this.errorModel
-        .create({
-          data,
-          fileName: this.fileName,
-          filePath: this.filePath,
-        })
-        .then(() => this.logger.error('Error parsing data element, saved log'));
+      this.dataRepository.createError({
+        data,
+        fileName: this.fileName,
+        filePath: this.filePath,
+      });
     }
   }
 
@@ -120,24 +108,7 @@ export class DataIngestService {
     const batchData = [...this.normalizedDataBatch];
     this.normalizedDataBatch = [];
 
-    const writeOperation: AnyBulkWriteOperation<NormalizedData>[] =
-      batchData.map((data) => {
-        const { id, ...updatableFields } = data;
-        return {
-          updateOne: {
-            filter: { id: data.id },
-            update: {
-              $set: { ...updatableFields },
-            },
-            upsert: true,
-          },
-        };
-      });
-
-    this.dataModel
-      .bulkWrite(writeOperation, {})
-      .then(() => this.logger.debug('Bulk insert success'))
-      .catch((error) => this.logger.error(error));
+    this.dataRepository.normalizedDataUpsert(batchData);
   }
 
   private selectParser(data: any) {

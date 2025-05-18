@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { EnvConfiguration, EnvValidationSchema } from './config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DatabaseConfigModule, DatabaseConfigService } from './config/database';
 import { DataIngestModule } from './data-ingest/data-ingest.module';
 import { DataQueryModule } from './data-query/data-query.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DataRepositoryModule } from './data-repository/data-repository.module';
 
 @Module({
   imports: [
@@ -23,8 +23,10 @@ import { DataQueryModule } from './data-query/data-query.module';
     }),
     DataIngestModule,
     DataQueryModule,
+    ScheduleModule.forRoot(),
+    DataRepositoryModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

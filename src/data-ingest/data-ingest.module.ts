@@ -2,15 +2,8 @@ import { Module } from '@nestjs/common';
 import { DataIngestService } from './data-ingest.service';
 import { DataIngestController } from './data-ingest.controller';
 import { HttpModule } from '@nestjs/axios';
-import { MongooseModule } from '@nestjs/mongoose';
-import {
-  NormalizedData,
-  NormalizedDataSchema,
-} from 'src/persistance/schemas/normalized-data.schema';
-import {
-  ProcessError,
-  ProcessErrorSchema,
-} from 'src/persistance/schemas/errors.schema';
+import { CronService } from 'src/cron/cron.service';
+import { DataRepositoryModule } from 'src/data-repository/data-repository.module';
 
 @Module({
   imports: [
@@ -18,12 +11,9 @@ import {
       timeout: 5000,
       maxRedirects: 5,
     }),
-    MongooseModule.forFeature([
-      { name: NormalizedData.name, schema: NormalizedDataSchema },
-      { name: ProcessError.name, schema: ProcessErrorSchema },
-    ]),
+    DataRepositoryModule,
   ],
   controllers: [DataIngestController],
-  providers: [DataIngestService],
+  providers: [DataIngestService, CronService],
 })
 export class DataIngestModule {}
